@@ -11,7 +11,7 @@ public class MyClient {
             String str = "";
             dout.writeUTF("HELO");
             dout.flush();
-            System.out.println("sending: " + str);
+            System.out.println("sending: HELO");
             while(!str.equals("BYE")) {
                 str = din.readUTF();
                 System.out.println("SERVER says: " + str);  
