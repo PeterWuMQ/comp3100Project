@@ -7,7 +7,9 @@ public class MyServer {
             ServerSocket ss = new ServerSocket(5000);
             Socket s = ss.accept();
             DataInputStream din = new DataInputStream(s.getInputStream());
-            
+            String str = (String)din.readUTF();
+            System.out.println("message = " + str);
+            ss.close();
         }catch(Exception e){System.out.println(e);}
     }
 }
