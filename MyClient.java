@@ -9,16 +9,19 @@ public class MyClient {
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 
             String str = "";
+            dout.writeUTF("HELO");
+            dout.flush();
+            System.out.println("sending: " + str);
             while(!str.equals("BYE")) {
-                str = dout.readUTF();
+                str = din.readUTF();
                 System.out.println("SERVER says: " + str);  
                 if(str.equals("G'DAY")) {
+                    System.out.println("sending: BYE");
                     dout.writeUTF("BYE");
                     dout.flush();
                 }
             }
-            dout.writeUTF("HELO");  
-            dout.flush();  
+            System.out.println("closing connection to server");
             dout.close();  
             s.close();  
         }catch(Exception e){System.out.println(e);}  

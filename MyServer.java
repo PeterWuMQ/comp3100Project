@@ -14,12 +14,15 @@ public class MyServer {
                 str = din.readUTF();
                 System.out.println("CLIENT says: " + str);
                 if(str.equals("HELO")) {
+                    System.out.println("sending G'DAY");
                     dout.writeUTF("G'DAY");
                     dout.flush();
                 }
             }
+            System.out.println("sending G'DAY");
             dout.writeUTF("BYE");
             dout.flush();
+            System.out.println("closing connection to client");
             din.close();
             s.close();
             ss.close();
