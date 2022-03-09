@@ -7,8 +7,21 @@ public class MyServer {
             ServerSocket ss = new ServerSocket(5000);
             Socket s = ss.accept();
             DataInputStream din = new DataInputStream(s.getInputStream());
-            String str = (String)din.readUTF();
-            System.out.println("message = " + str);
+            DataOutputStream dout = new DataOutputStream(s.getOutputStream());
+
+            String str = "";
+            while(!str.equals("BYE")) {
+                str = din.readUTF();
+                System.out.println("CLIENT says: " + str);
+                if(str.equals("HELO")) {
+                    dout.writeUTF("G'DAY");
+                    dout.flush();
+                }
+            }
+            dout.writeUTF("BYE");
+            dout.flush();
+            din.close();
+            s.close();
             ss.close();
         }catch(Exception e){System.out.println(e);}
     }
