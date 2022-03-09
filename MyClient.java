@@ -4,7 +4,7 @@ import java.net.*;
 public class MyClient {  
     public static void main(String[] args) {  
         try{      
-            Socket s = new Socket("localhost", 5000);  
+            Socket s = new Socket("10.6.22.16", 5000);  
             DataInputStream din = new DataInputStream(s.getInputStream());
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 

@@ -19,7 +19,7 @@ public class MyServer {
                     dout.flush();
                 }
             }
-            System.out.println("sending G'DAY");
+            System.out.println("sending BYE");
             dout.writeUTF("BYE");
             dout.flush();
             System.out.println("closing connection to client");
