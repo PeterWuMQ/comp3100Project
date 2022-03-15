@@ -10,19 +10,23 @@ public class MyClient {
             DataInputStream din = new DataInputStream(s.getInputStream());
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 
-            String str = "";
+            String data = "";
             dout.writeUTF("HELO");
             dout.flush();
-            System.out.println("sending: HELO");
-            while (!str.equals("BYE")) {
-                str = din.readUTF();
-                System.out.println("SERVER says: " + str);
-                if (str.equals("G'DAY")) {
-                    System.out.println("sending: BYE");
+            System.out.println("Sending: HELO");
+            while (!data.equals("BYE")) {
+                data = din.readUTF();
+                System.out.println("Received: " + data);
+                if (data.equals("G'DAY")) {
+                    System.out.println("Sending: BYE");
                     dout.writeUTF("BYE");
                     dout.flush();
                 }
             }
+            dout.writeUTF(args[0]);
+            System.out.println("Sending: " + args[0]);
+            data = din.readUTF();
+            System.out.println("Received: " + data);
         } catch (UnknownHostException e) {
             System.out.println("Sock:" + e.getMessage());
         } catch (EOFException e) {

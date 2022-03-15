@@ -35,18 +35,24 @@ class Connection extends Thread {
 
     public void run() {
         try {
-            String str = "";
-            while (!str.equals("BYE")) {
-                str = din.readUTF();
-                System.out.println("CLIENT says: " + str);
-                if (str.equals("HELO")) {
-                    System.out.println("sending G'DAY");
+            String data = "";
+            while (!data.equals("BYE")) {
+                data = din.readUTF();
+                System.out.println("Received: " + data);
+                if (data.equals("HELO")) {
+                    System.out.println("Sending: G'DAY");
                     dout.writeUTF("G'DAY");
                     dout.flush();
+                } else {
+                    System.out.println("Sending: BYE");
+                    dout.writeUTF("BYE");
                 }
             }
-            System.out.println("sending BYE");
-            dout.writeUTF("BYE");
+
+            data = din.readUTF();
+            System.out.println("Received: " + data);
+            System.out.println("Sending: " + data);
+            dout.writeUTF(data);
         } catch (EOFException e) {
             System.out.println("EOF:" + e.getMessage());
         } catch (IOException e) {
