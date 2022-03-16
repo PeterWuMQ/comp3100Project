@@ -5,28 +5,27 @@ public class MyClient {
     public static void main(String[] args) {
         Socket s = null;
         try {
-            int serverPort = 5000;
+            int serverPort = 50000;
             s = new Socket("192.168.56.1", serverPort);
-            DataInputStream din = new DataInputStream(s.getInputStream());
+            String username = System.getProperty("user.name");
+            BufferedReader din = new BufferedReader(new InputStreamReader(s.getInputStream()));
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 
             String data = "";
-            dout.writeUTF("HELO");
-            dout.flush();
+            dout.write(("HELO\n").getBytes());
             System.out.println("Sending: HELO");
-            while (!data.equals("BYE")) {
-                data = din.readUTF();
-                System.out.println("Received: " + data);
-                if (data.equals("G'DAY")) {
-                    System.out.println("Sending: BYE");
-                    dout.writeUTF("BYE");
-                    dout.flush();
-                }
-            }
-            dout.writeUTF(args[0]);
-            System.out.println("Sending: " + args[0]);
-            data = din.readUTF();
+            data = din.readLine();
             System.out.println("Received: " + data);
+            if (data.equals("OK")) {
+                System.out.println("Sending: AUTH");
+                dout.write(("AUTH " + username).getBytes());
+            }
+            data = din.readLine();
+            System.out.println("Received: " + data);
+            if (data.equals("OK")) {
+                System.out.println("Sending: REDY");
+                dout.write(("REDY").getBytes());
+            }
         } catch (UnknownHostException e) {
             System.out.println("Sock:" + e.getMessage());
         } catch (EOFException e) {
