@@ -10,8 +10,8 @@ public class MyClient {
             String username = System.getProperty("user.name");
             BufferedReader din = new BufferedReader(new InputStreamReader(s.getInputStream()));
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-
             String data = "";
+            
             dout.write(("HELO\n").getBytes());
             dout.flush();
             System.out.println("Sending: HELO");
@@ -29,8 +29,25 @@ public class MyClient {
                 dout.write(("REDY\n").getBytes());
                 dout.flush();
             }
+            
+            Boolean check = true;
             data = din.readLine();
             System.out.println("Received: " + data);
+            dout.write(("GETS all\n").getBytes());
+            dout.flush();
+            data = din.readLine();
+            System.out.println("Received: " + data);
+           /*  String[] split = data.split(" ");
+
+            while(check) {
+                if(split[0].equals("JOBN")) {
+                    dout.write(("REDY\n").getBytes());
+                    dout.flush();
+                } else {
+                    check = false;
+                }
+            } */
+            
             dout.write(("QUIT\n").getBytes());
             dout.flush();
         } catch (UnknownHostException e) {
