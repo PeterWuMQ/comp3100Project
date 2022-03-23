@@ -30,13 +30,62 @@ public class MyClient {
                 dout.flush();
             }
             
-            Boolean check = true;
+            
             data = din.readLine();
             System.out.println("Received: " + data);
-            dout.write(("GETS all\n").getBytes());
+            dout.write(("GETS All\n").getBytes());
             dout.flush();
             data = din.readLine();
             System.out.println("Received: " + data);
+            String[] serverData = data.split(" ");
+            int serverNo = Integer.parseInt(serverData[1]);
+            String[] servers = new String[serverNo];
+
+            dout.write(("OK\n").getBytes());
+            dout.flush();
+
+            for(int i = 0; i < serverNo; i++) {
+                data = din.readLine();
+                System.out.println("Received: " + data);
+                servers[i] = data;
+            }
+
+            int largest = 0;
+            String largestServer = null;
+
+            for(int i = 0; i < serverNo; i++) {
+                String[] splitServer = servers[i].split(" ");
+                int temp = Integer.parseInt(splitServer[4]);
+                if(largest < temp) {
+                    largest = temp;
+                    largestServer = servers[i];
+                }
+            }
+
+            dout.write(("OK\n").getBytes());
+            dout.flush();
+            data = din.readLine();
+            System.out.println("Received: " + data);
+
+            while(true) {
+                dout.write(("REDY\n").getBytes());
+                dout.flush();
+                data = din.readLine();
+                System.out.println("Received: " + data);
+                String[] jobSplit = data.split(" ");
+                String[] lsSplit = largestServer.split(" ");
+                if(jobSplit[0].equals("JOBN")) {
+                    String schd = "SCHD " + jobSplit[2] + " " + lsSplit[0] + " " + lsSplit[1] + "\n";
+                    dout.write((schd).getBytes());
+                    dout.flush();
+                    data = din.readLine();
+                    System.out.println("Received: " + data);
+                } else if(jobSplit[0].equals("JCPL")){
+                } else {
+                    break;
+                }
+            }
+            
            /*  String[] split = data.split(" ");
 
             while(check) {
