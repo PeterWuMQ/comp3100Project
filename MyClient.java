@@ -5,100 +5,19 @@ public class MyClient {
     public static void main(String[] args) {
         Socket s = null;
         try {
-            int serverPort = 50001;
+            int serverPort = 50000;
             s = new Socket("127.0.0.1", serverPort);
-            String username = System.getProperty("user.name");
+            
             BufferedReader din = new BufferedReader(new InputStreamReader(s.getInputStream()));
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-            String data = "";
             
-            dout.write(("HELO\n").getBytes());
-            dout.flush();
-            System.out.println("Sending: HELO");
-            data = din.readLine();
-            System.out.println("Received: " + data);
-            if (data.equals("OK")) {
-                System.out.println("Sending: AUTH");
-                dout.write(("AUTH " + username + "\n").getBytes());
-                dout.flush();
-            }
-            data = din.readLine();
-            System.out.println("Received: " + data);
-            if (data.equals("OK")) {
-                System.out.println("Sending: REDY");
-                dout.write(("REDY\n").getBytes());
-                dout.flush();
-            }
-            
-            
-            data = din.readLine();
-            System.out.println("Received: " + data);
-            dout.write(("GETS All\n").getBytes());
-            dout.flush();
-            data = din.readLine();
-            System.out.println("Received: " + data);
-            String[] serverData = data.split(" ");
-            int serverNo = Integer.parseInt(serverData[1]);
-            String[] servers = new String[serverNo];
+            ProtocolHandshake(din, dout);
 
-            dout.write(("OK\n").getBytes());
-            dout.flush();
+            String[] servers = GetServers(din, dout);
 
-            for(int i = 0; i < serverNo; i++) {
-                data = din.readLine();
-                System.out.println("Received: " + data);
-                servers[i] = data;
-            }
-
-            int largest = 0;
-            String largestServer = null;
-
-            for(int i = 0; i < serverNo; i++) {
-                String[] splitServer = servers[i].split(" ");
-                int temp = Integer.parseInt(splitServer[4]);
-                if(largest < temp) {
-                    largest = temp;
-                    largestServer = servers[i];
-                }
-            }
-
-            dout.write(("OK\n").getBytes());
-            dout.flush();
-            data = din.readLine();
-            System.out.println("Received: " + data);
-
-            while(true) {
-                dout.write(("REDY\n").getBytes());
-                dout.flush();
-                data = din.readLine();
-                System.out.println("Received: " + data);
-                String[] jobSplit = data.split(" ");
-                String[] lsSplit = largestServer.split(" ");
-                if(jobSplit[0].equals("JOBN")) {
-                    String schd = "SCHD " + jobSplit[2] + " " + lsSplit[0] + " " + lsSplit[1] + "\n";
-                    dout.write((schd).getBytes());
-                    dout.flush();
-                    data = din.readLine();
-                    System.out.println("Received: " + data);
-                } else if(jobSplit[0].equals("JCPL")){
-                } else {
-                    break;
-                }
-            }
-            
-           /*  String[] split = data.split(" ");
-
-            while(check) {
-                if(split[0].equals("JOBN")) {
-                    dout.write(("REDY\n").getBytes());
-                    dout.flush();
-                } else {
-                    check = false;
-                }
-            } */
-            
-            dout.write(("QUIT\n").getBytes());
-            dout.flush();
+            ALT(din, dout, servers);
+        
+            WriteData(dout, "QUIT");
         } catch (UnknownHostException e) {
             System.out.println("Sock:" + e.getMessage());
         } catch (EOFException e) {
@@ -113,5 +32,96 @@ public class MyClient {
                     System.out.println("close:" + e.getMessage());
                 }
         }
+    }
+
+    private static void ProtocolHandshake(BufferedReader din, DataOutputStream dout) throws IOException {
+        String data = "";
+        String username = System.getProperty("user.name");
+
+        WriteData(dout, "HELO");
+
+        data = ReadData(din);
+
+        if (data.equals("OK")) {
+            WriteData(dout, "AUTH " + username);
+        }
+
+        data = ReadData(din);
+
+        if (data.equals("OK")) {
+            WriteData(dout, "REDY");
+        }
+    }
+
+    private static String[] GetServers(BufferedReader din, DataOutputStream dout) throws IOException {
+            String data = "";
+
+            data = ReadData(din);
+
+            WriteData(dout, "GETS All");
+
+            data = ReadData(din);
+            String[] serverData = data.split(" ");
+            int serverNo = Integer.parseInt(serverData[1]);
+            String[] servers = new String[serverNo];
+
+            WriteData(dout, "OK");
+
+            for(int i = 0; i < serverNo; i++) {
+                data = ReadData(din);
+                servers[i] = data;
+            }
+
+            WriteData(dout, "OK");
+            data = ReadData(din);
+
+            return servers;
+    }
+
+    private static void ALT(BufferedReader din, DataOutputStream dout, String[] servers) throws IOException {
+        int largest = 0;
+        String largestServer = null;
+        String data = "";
+
+        for(int i = 0; i < servers.length; i++) {
+            String[] splitServer = servers[i].split(" ");
+            int temp = Integer.parseInt(splitServer[4]);
+            if(largest < temp) {
+                largest = temp;
+                largestServer = servers[i];
+            }
+        }
+
+
+        while(true) {
+            WriteData(dout, "REDY");
+
+            data = ReadData(din);
+
+            String[] jobSplit = data.split(" ");
+            String[] lsSplit = largestServer.split(" ");
+
+            if(jobSplit[0].equals("JOBN")) {
+                String schd = "SCHD " + jobSplit[2] + " " + lsSplit[0] + " " + lsSplit[1];
+                WriteData(dout, schd);
+                data = ReadData(din);
+            } else if(jobSplit[0].equals("JCPL")){
+            } else {
+                break;
+            }
+        }
+    }
+
+    private static void WriteData(DataOutputStream dout, String data) throws IOException {
+        System.out.println("Sending: " + data);
+        dout.write((data + "\n").getBytes());
+        dout.flush();
+    }
+
+    private static String ReadData(BufferedReader din) throws IOException {
+        String data = "";
+        data = din.readLine();
+        System.out.println("Received: " + data);
+        return data;
     }
 }
