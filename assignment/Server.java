@@ -1,3 +1,5 @@
+package assignment;
+
 public class Server {
     private String type;
     private int id;
