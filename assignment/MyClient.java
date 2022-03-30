@@ -17,9 +17,9 @@ public class MyClient {
             
             ProtocolHandshake(din, dout);
 
-            List<Server> servers = GetServers(din, dout);
+            // ALT(din, dout, servers);
 
-            ALT(din, dout, servers);
+            LRR(din, dout);
         
             WriteData(dout, "QUIT");
         } catch (UnknownHostException e) {
@@ -51,16 +51,10 @@ public class MyClient {
         }
 
         data = ReadData(din);
-
-        if (data.equals("OK")) {
-            WriteData(dout, "REDY");
-        }
     }
 
     private static List<Server> GetServers(BufferedReader din, DataOutputStream dout) throws IOException {
             String data = "";
-
-            data = ReadData(din);
 
             WriteData(dout, "GETS All");
 
@@ -83,19 +77,10 @@ public class MyClient {
             return servers;
     }
 
-    private static void ALT(BufferedReader din, DataOutputStream dout, List<Server> servers) throws IOException {
+    private static void ALT(BufferedReader din, DataOutputStream dout) throws IOException {
         int largest = 0;
         Server largestServer = new Server("null", 0, 0);
         String data = "";
-
-        for(int i = 0; i < servers.size(); i++) {
-            int temp = servers.get(i).getCores();
-            if(largest < temp) {
-                largest = temp;
-                largestServer = servers.get(i);
-            }
-        }
-
 
         while(true) {
             WriteData(dout, "REDY");
@@ -104,10 +89,69 @@ public class MyClient {
 
             String[] jobSplit = data.split(" ");
 
+            if(largestServer.getType() == "null") {
+                List<Server> servers = GetServers(din, dout);
+                for(int i = 0; i < servers.size(); i++) {
+                    int temp = servers.get(i).getCores();
+                    if(largest < temp) {
+                        largest = temp;
+                        largestServer = servers.get(i);
+                    }
+                }
+            }
+
             if(jobSplit[0].equals("JOBN")) {
                 String schd = "SCHD " + jobSplit[2] + " " + largestServer.getType() + " " + Integer.valueOf(largestServer.getId());
                 WriteData(dout, schd);
                 data = ReadData(din);
+            } else if(jobSplit[0].equals("JCPL")){
+            } else {
+                break;
+            }
+        }
+    }
+
+    private static void LRR(BufferedReader din, DataOutputStream dout) throws IOException {
+        String data = "";
+
+        List<Server> largestServers = new ArrayList<>();
+
+        int current = 0;
+
+        while(true) {
+            WriteData(dout, "REDY");
+
+            data = ReadData(din);
+
+            String[] jobSplit = data.split(" ");
+
+            if(largestServers.size() == 0) {
+                int largest = 0;
+                String largestType = " ";
+                List<Server> servers = GetServers(din, dout);
+                for(int i = 0; i < servers.size(); i++) {
+                    int temp = servers.get(i).getCores();
+                    if(largest < temp) {
+                        largest = temp;
+                        largestType = servers.get(i).getType();
+                    }
+                }
+
+                for(int i = 0; i < servers.size(); i++) {
+                    if(largestType == servers.get(i).getType()) {
+                        largestServers.add(servers.get(i));
+                    }
+                }
+            }
+
+            if(jobSplit[0].equals("JOBN")) {
+                String schd = "SCHD " + jobSplit[2] + " " + largestServers.get(current).getType() + " " + Integer.valueOf(largestServers.get(current).getId());
+                WriteData(dout, schd);
+                data = ReadData(din);
+                current ++;
+                if(current >= largestServers.size()) {
+                    current = 0;
+                }
             } else if(jobSplit[0].equals("JCPL")){
             } else {
                 break;
