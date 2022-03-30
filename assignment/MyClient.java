@@ -129,6 +129,7 @@ public class MyClient {
                 int largest = 0;
                 String largestType = " ";
                 List<Server> servers = GetServers(din, dout);
+
                 for(int i = 0; i < servers.size(); i++) {
                     int temp = servers.get(i).getCores();
                     if(largest < temp) {
@@ -138,7 +139,7 @@ public class MyClient {
                 }
 
                 for(int i = 0; i < servers.size(); i++) {
-                    if(largestType == servers.get(i).getType()) {
+                    if(servers.get(i).getType().equals(largestType)) {
                         largestServers.add(servers.get(i));
                     }
                 }
@@ -160,7 +161,6 @@ public class MyClient {
     }
 
     private static void WriteData(DataOutputStream dout, String data) throws IOException {
-        System.out.println("Sending: " + data);
         dout.write((data + "\n").getBytes());
         dout.flush();
     }
@@ -168,7 +168,6 @@ public class MyClient {
     private static String ReadData(BufferedReader din) throws IOException {
         String data = "";
         data = din.readLine();
-        System.out.println("Received: " + data);
         return data;
     }
 }
