@@ -14,11 +14,11 @@ public class MyClient {
             BufferedReader din = new BufferedReader(new InputStreamReader(s.getInputStream()));
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 
-            ProtocolHandshake(din, dout);
+            protocolHandshake(din, dout);
 
             LRR(din, dout);
 
-            WriteData(dout, "QUIT");
+            writeData(dout, "QUIT");
         } catch (UnknownHostException e) {
             System.out.println("Sock:" + e.getMessage());
         } catch (EOFException e) {
@@ -36,25 +36,25 @@ public class MyClient {
     }
 
     // Performs initial handshake with server to establish connection
-    private static void ProtocolHandshake(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void protocolHandshake(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         String username = System.getProperty("user.name");
 
-        WriteData(dout, "HELO");
+        writeData(dout, "HELO");
 
         data = din.readLine();
 
-        WriteData(dout, "AUTH " + username);
+        writeData(dout, "AUTH " + username);
 
         data = din.readLine();
     }
 
     // Sends request to server for all server information and returns a List of all
     // servers
-    private static List<Server> GetServers(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static List<Server> getServers(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
 
-        WriteData(dout, "GETS All");
+        writeData(dout, "GETS All");
 
         // Get the amount of incoming server messages and initialise a empty list of
         // servers
@@ -63,7 +63,7 @@ public class MyClient {
         int serverNo = Integer.parseInt(serverData[1]);
         List<Server> servers = new ArrayList<>();
 
-        WriteData(dout, "OK");
+        writeData(dout, "OK");
 
         // parse every message and store as a List of servers
         for (int i = 0; i < serverNo; i++) {
@@ -73,7 +73,7 @@ public class MyClient {
                     Integer.valueOf(serverMessage[4])));
         }
 
-        WriteData(dout, "OK");
+        writeData(dout, "OK");
         data = din.readLine();
 
         return servers;
@@ -87,7 +87,7 @@ public class MyClient {
         Server largestServer = new Server("null", 0, 0);
 
         while (true) {
-            WriteData(dout, "REDY");
+            writeData(dout, "REDY");
 
             // Get the next message
             data = din.readLine();
@@ -96,7 +96,7 @@ public class MyClient {
             // If largest server hasn't been found yet then get all servers and find the
             // largest
             if (largestServer.getType() == "null") {
-                List<Server> servers = GetServers(din, dout);
+                List<Server> servers = getServers(din, dout);
                 for (int i = 0; i < servers.size(); i++) {
                     int temp = servers.get(i).getCores();
                     if (largest < temp) {
@@ -112,7 +112,7 @@ public class MyClient {
             if (message[0].equals("JOBN")) {
                 String schd = "SCHD " + message[2] + " " + largestServer.getType() + " "
                         + Integer.valueOf(largestServer.getId());
-                WriteData(dout, schd);
+                writeData(dout, schd);
                 data = din.readLine();
             } else if (message[0].equals("JCPL")) {
             } else if (message[0].equals("NONE")) {
@@ -130,7 +130,7 @@ public class MyClient {
         List<Server> largestServers = new ArrayList<>();
 
         while (true) {
-            WriteData(dout, "REDY");
+            writeData(dout, "REDY");
 
             // Get the current
             data = din.readLine();
@@ -140,7 +140,7 @@ public class MyClient {
             if (largestServers.isEmpty()) {
                 int largest = 0;
                 String largestType = " ";
-                List<Server> servers = GetServers(din, dout);
+                List<Server> servers = getServers(din, dout);
 
                 // Find the largest type of server
                 for (int i = 0; i < servers.size(); i++) {
@@ -167,7 +167,7 @@ public class MyClient {
             if (message[0].equals("JOBN")) {
                 String schd = "SCHD " + message[2] + " " + largestServers.get(current).getType() + " "
                         + Integer.valueOf(largestServers.get(current).getId());
-                WriteData(dout, schd);
+                writeData(dout, schd);
                 data = din.readLine();
                 current++;
                 if (current >= largestServers.size()) {
@@ -181,7 +181,7 @@ public class MyClient {
     }
 
     // Writes data to server appending newline at the end
-    private static void WriteData(DataOutputStream dout, String data) throws IOException {
+    private static void writeData(DataOutputStream dout, String data) throws IOException {
         dout.write((data + "\n").getBytes());
         dout.flush();
     }
