@@ -14,9 +14,9 @@ public class MyClient {
             BufferedReader din = new BufferedReader(new InputStreamReader(s.getInputStream()));
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 
-            protocolHandshake(din, dout);
+            initiateHandshake(din, dout);
 
-            LRR(din, dout);
+            lrr(din, dout);
 
             writeData(dout, "QUIT");
         } catch (UnknownHostException e) {
@@ -36,7 +36,7 @@ public class MyClient {
     }
 
     // Performs initial handshake with server to establish connection
-    private static void protocolHandshake(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void initiateHandshake(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         String username = System.getProperty("user.name");
 
@@ -81,7 +81,7 @@ public class MyClient {
 
     // All To Largest - Schedules all jobs to the "largest" server (most amount of
     // cores)
-    private static void ALT(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void atl(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         int largest = 0;
         Server largestServer = new Server("null", 0, 0);
@@ -124,7 +124,7 @@ public class MyClient {
     // Largest Round Robin - Schedules all jobs to servers of the same type as the
     // server with the "largest" server (most amount of cores) in a round robin
     // fashion
-    private static void LRR(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void lrr(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         int current = 0;
         List<Server> largestServers = new ArrayList<>();
