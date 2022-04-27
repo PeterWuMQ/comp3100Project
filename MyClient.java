@@ -6,6 +6,11 @@ import java.util.List;
 
 public class MyClient {
     public static void main(String[] args) {
+        if (args.length != 2 || !args[0].equals("-a")) {
+            System.out.println("Usage: java MyClient -a atl | lrr | fc");
+            System.exit(0);
+        }
+
         Socket s = null;
         try {
             int serverPort = 50000;
@@ -16,7 +21,14 @@ public class MyClient {
 
             initiateHandshake(din, dout);
 
-            lrr(din, dout);
+            if (args[1].equals("atl")) {
+                atl(din, dout);
+            } else if (args[1].equals("lrr")) {
+                lrr(din, dout);
+            } else if (args[1].equals("fc")) {
+                fc(din, dout);
+            }
+            
 
             writeData(dout, "QUIT");
         } catch (UnknownHostException e) {
@@ -173,6 +185,51 @@ public class MyClient {
                 if (current >= largestServers.size()) {
                     current = 0;
                 }
+            } else if (message[0].equals("JCPL")) {
+            } else if (message[0].equals("NONE")) {
+                break;
+            }
+        }
+    }
+
+    private static void fc(BufferedReader din, DataOutputStream dout) throws IOException {
+        while(true) {
+            String data = "";
+            Server capable = null;
+
+            writeData(dout, "REDY");
+
+            data = din.readLine();
+            String[] message = data.split(" ");
+
+            if (message[0].equals("JOBN")) {
+                writeData(dout, "GETS Capable " + message[4] + " " + message[5] + " " + message[6]);
+
+                data = din.readLine();
+
+                String[] serverData = data.split(" ");
+                int serverNo = Integer.parseInt(serverData[1]);
+
+                writeData(dout, "OK");
+
+                for (int i = 0; i < serverNo; i++) {
+                    data = din.readLine();
+                    String[] serverMessage = data.split(" ");
+                    if (capable == null) {
+                        capable = new Server(serverMessage[0], Integer.valueOf(serverMessage[1]),
+                        Integer.valueOf(serverMessage[4]));
+                    }
+                }
+
+                writeData(dout, "OK");
+                data = din.readLine();
+
+                String schd = "SCHD " + message[2] + " " + capable.getType() + " " + Integer.valueOf(capable.getId());
+                
+                writeData(dout, schd);
+
+                data = din.readLine();
+
             } else if (message[0].equals("JCPL")) {
             } else if (message[0].equals("NONE")) {
                 break;
