@@ -70,11 +70,15 @@ public class Server {
 
     public void addJob(Job job) {
         jobs.add(job);
+        setAvailCores(getAvailCores() - job.getCores());
     }
 
     public void removeJob(String id) {
+        int c;
         for (int i = 0; i < jobs.size(); i++) {
             if (jobs.get(i).getId().equals(id)) {
+                c = jobs.get(i).getCores();
+                setAvailCores(getAvailCores() + c);
                 jobs.remove(jobs.get(i));
                 break;
             }
