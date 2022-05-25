@@ -23,8 +23,8 @@ public class MyClient {
 
             initiateHandshake(din, dout);
 
-            if (args[1].equals("atl")) {
-                fc(din, dout);
+            if (args[1].equals("sbf")) {
+                sbf(din, dout);
             }
 
             writeData(dout, "QUIT");
@@ -95,7 +95,7 @@ public class MyClient {
         return servers;
     }
 
-    private static void fc(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void sbf(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         int largest = 0;
         Server largestServer = null;

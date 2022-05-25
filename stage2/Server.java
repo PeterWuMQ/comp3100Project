@@ -1,18 +1,21 @@
 package stage2;
 
-import java.util.Comparator;
+import java.util.*;
 
 public class Server {
     private String type;
     private String id;
     private int cores;
+    private int availCores;
     private int memory;
     private int disk;
+    private List<Job> jobs = new ArrayList<>();
 
     public Server(String type, String id, int cores, int memory, int disk) {
         setType(type);
         setId(id);
         setCores(cores);
+        setAvailCores(cores);
         setMemory(memory);
         setDisk(disk);
     }
@@ -27,6 +30,10 @@ public class Server {
 
     public void setCores(int cores) {
         this.cores = cores;
+    }
+
+    public void setAvailCores(int availCores) {
+        this.availCores = availCores;
     }
 
     public void setMemory(int memory) {
@@ -49,6 +56,10 @@ public class Server {
         return cores;
     }
 
+    public int getAvailCores() {
+        return availCores;
+    }
+
     public int getMemory() {
         return memory;
     }
@@ -57,14 +68,33 @@ public class Server {
         return disk;
     }
 
+    public void addJob(Job job) {
+        jobs.add(job);
+    }
+
+    public void removeJob(String id) {
+        for (int i = 0; i < jobs.size(); i++) {
+            if (jobs.get(i).getId().equals(id)) {
+                jobs.remove(jobs.get(i));
+                break;
+            }
+        }
+    }
+
     static class ServerSortingComparator implements Comparator<Server> {
         @Override
         public int compare(Server a, Server b) {
-            int CoreCompare = a.getCores() - b.getCores();
+            int compare = a.getCores() - b.getCores();
 
-            int MemoryCompare = a.getMemory() - b.getMemory();
+            if (compare == 0) {
+                compare = a.getMemory() - b.getMemory();
+            }
 
-            return (CoreCompare == 0) ? MemoryCompare : CoreCompare;
+            if (compare == 0) {
+                compare = a.getDisk() - b.getDisk();
+            }
+
+            return compare;
         }
     }
 }
