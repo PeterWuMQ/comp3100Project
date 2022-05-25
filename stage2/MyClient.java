@@ -1,8 +1,10 @@
+package stage2;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import stage2.Server.ServerSortingComparator;
 
 public class MyClient {
     public static void main(String[] args) {
@@ -76,8 +78,15 @@ public class MyClient {
         for (int i = 0; i < serverNo; i++) {
             data = din.readLine();
             String[] serverMessage = data.split(" ");
-            servers.add(new Server(serverMessage[0], Integer.valueOf(serverMessage[1]),
-                    Integer.valueOf(serverMessage[4])));
+            servers.add(new Server(serverMessage[0], serverMessage[1],
+                    Integer.valueOf(serverMessage[4]), Integer.valueOf(serverMessage[5]),
+                    Integer.valueOf(serverMessage[6])));
+        }
+
+        Collections.sort(servers, new ServerSortingComparator());
+
+        for (Server server : servers) {
+            System.out.print(server);
         }
 
         writeData(dout, "OK");
