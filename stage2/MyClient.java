@@ -69,6 +69,7 @@ public class MyClient {
         // servers
         data = din.readLine();
         String[] serverData = data.split(" ");
+        System.out.println(Arrays.toString(serverData));
         int serverNo = Integer.parseInt(serverData[1]);
         List<Server> servers = new ArrayList<>();
 
@@ -78,6 +79,7 @@ public class MyClient {
         for (int i = 0; i < serverNo; i++) {
             data = din.readLine();
             String[] serverMessage = data.split(" ");
+            System.out.println(Arrays.toString(serverMessage));
             servers.add(new Server(serverMessage[0], serverMessage[1],
                     Integer.valueOf(serverMessage[4]), Integer.valueOf(serverMessage[5]),
                     Integer.valueOf(serverMessage[6])));
@@ -85,8 +87,8 @@ public class MyClient {
 
         Collections.sort(servers, new ServerSortingComparator());
 
-        for (Server server : servers) {
-            System.out.print(server);
+        for(int i = 0; i < servers.size(); i++) {
+            System.out.println(servers.get(i).getCores() + " " + servers.get(i).getMemory() + " " +  servers.get(i).getDisk());
         }
 
         writeData(dout, "OK");
@@ -97,8 +99,8 @@ public class MyClient {
 
     private static void sbf(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
-        int largest = 0;
-        Server largestServer = null;
+        List<Server> servers = new ArrayList<>();
+        Server best = new Server("type", "id", 0, 0, 0);
 
         while (true) {
             writeData(dout, "REDY");
@@ -107,27 +109,36 @@ public class MyClient {
             String[] message = data.split(" ");
 
             if (message[0].equals("JOBN")) {
-                // If largest server hasn't been found yet then get all servers and find the
-                // largest
-                if (largestServer.getType() == "null") {
-                    List<Server> servers = getServers(din, dout);
-                    for (int i = 0; i < servers.size(); i++) {
-                        int temp = servers.get(i).getCores();
-                        if (largest < temp) {
-                            largest = temp;
-                            largestServer = servers.get(i);
-                        }
-                    }
+                
+                if(servers.size() == 0) {
+                    servers = getServers(din, dout);
+                    writeData(dout, "OK");
+                    data = din.readLine();
+                }
+                
+                for(int i = 0; i < servers.size(); i++) {
+                    if(Integer.valueOf(message[4]) <= servers.get(i).getAvailCores() && Integer.valueOf(message[5]) <= servers.get(i).getMemory() && Integer.valueOf(message[6]) <= servers.get(i).getDisk()) {
+                        best = servers.get(i);
+                        Job job = new Job(message[2], Integer.valueOf(message[4]));
+                        servers.get(i).addJob(job);
+                        System.out.println("job cores " + message[4]);
+                        System.out.println("subtracted " + servers.get(i).getType() + " " + servers.get(i).getId() + " " + servers.get(i).getAvailCores());
+                        break;
+                    } 
                 }
 
-                writeData(dout, "OK");
-                data = din.readLine();
-
-                scheduleJob(dout, message[2], largestServer.getType(), largestServer.getId());
+                scheduleJob(dout, message[2], best.getType(), best.getId());
 
                 data = din.readLine();
 
             } else if (message[0].equals("JCPL")) {
+                for(int i = 0; i < servers.size(); i++) {
+                    if(servers.get(i).getId().equals(message[4]) && servers.get(i).getType().equals(message[3])) {
+                        servers.get(i).removeJob(message[2]);
+                        System.out.println("added " + servers.get(i).getType() + " " + servers.get(i).getId() + " " + servers.get(i).getAvailCores());
+                        break;
+                    }
+                }
             } else if (message[0].equals("NONE")) {
                 break;
             }
