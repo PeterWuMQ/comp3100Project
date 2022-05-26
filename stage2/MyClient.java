@@ -46,29 +46,25 @@ public class MyClient {
 
     // Performs initial handshake with server to establish connection
     private static void initiateHandshake(BufferedReader din, DataOutputStream dout) throws IOException {
-        String data = "";
         String username = System.getProperty("user.name");
 
         writeData(dout, "HELO");
 
-        data = din.readLine();
+        readData(din);
 
         writeData(dout, "AUTH " + username);
 
-        data = din.readLine();
+        readData(din);
     }
 
     // Sends request to server for all server information and returns a List of all
     // servers
     private static List<Server> getServers(BufferedReader din, DataOutputStream dout) throws IOException {
-        String data = "";
-
         writeData(dout, "GETS All");
 
         // Get the amount of incoming server messages and initialise a empty list of
         // servers
-        data = din.readLine();
-        String[] serverData = data.split(" ");
+        String[] serverData = readData(din).split(" ");
         System.out.println(Arrays.toString(serverData));
         int serverNo = Integer.parseInt(serverData[1]);
         List<Server> servers = new ArrayList<>();
@@ -77,8 +73,7 @@ public class MyClient {
 
         // parse every message and store as a List of servers
         for (int i = 0; i < serverNo; i++) {
-            data = din.readLine();
-            String[] serverMessage = data.split(" ");
+            String[] serverMessage = readData(din).split(" ");
 
             String sType = serverMessage[0];
             String sId = serverMessage[1];
@@ -97,28 +92,26 @@ public class MyClient {
         }
 
         writeData(dout, "OK");
-        data = din.readLine();
+        readData(din);
 
         return servers;
     }
 
     private static void sbf(BufferedReader din, DataOutputStream dout) throws IOException {
-        String data = "";
         List<Server> servers = new ArrayList<>();
         Server best = new Server("type", "id", 0, 0, 0);
 
         while (true) {
             writeData(dout, "REDY");
 
-            data = din.readLine();
-            String[] message = data.split(" ");
+            String[] message = readData(din).split(" ");
 
             if (message[0].equals("JOBN")) {
                 
                 if(servers.size() == 0) {
                     servers = getServers(din, dout);
                     writeData(dout, "OK");
-                    data = din.readLine();
+                    readData(din);
                 }
 
                 String jId = message[2];
@@ -142,7 +135,7 @@ public class MyClient {
 
                 scheduleJob(dout, message[2], best.getType(), best.getId());
 
-                data = din.readLine();
+                readData(din);
 
             } else if (message[0].equals("JCPL")) {
                 String cType = message[3];
@@ -175,5 +168,9 @@ public class MyClient {
     private static void writeData(DataOutputStream dout, String data) throws IOException {
         dout.write((data + "\n").getBytes());
         dout.flush();
+    }
+
+    private static String readData(BufferedReader din) throws IOException {
+        return din.readLine();
     }
 }
