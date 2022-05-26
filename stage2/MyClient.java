@@ -79,10 +79,15 @@ public class MyClient {
         for (int i = 0; i < serverNo; i++) {
             data = din.readLine();
             String[] serverMessage = data.split(" ");
+
+            String sType = serverMessage[0];
+            String sId = serverMessage[1];
+            int sCores = Integer.valueOf(serverMessage[4]);
+            int sMem = Integer.valueOf(serverMessage[5]);
+            int sDisk = Integer.valueOf(serverMessage[6]);
             System.out.println(Arrays.toString(serverMessage));
-            servers.add(new Server(serverMessage[0], serverMessage[1],
-                    Integer.valueOf(serverMessage[4]), Integer.valueOf(serverMessage[5]),
-                    Integer.valueOf(serverMessage[6])));
+
+            servers.add(new Server(sType, sId, sCores, sMem, sDisk));
         }
 
         Collections.sort(servers, new ServerSortingComparator());
@@ -115,13 +120,21 @@ public class MyClient {
                     writeData(dout, "OK");
                     data = din.readLine();
                 }
+
+                String jId = message[2];
+                int jCores = Integer.valueOf(message[4]);
+                int jMem = Integer.valueOf(message[5]);
+                int jDisk = Integer.valueOf(message[6]);
                 
-                for(int i = 0; i < servers.size(); i++) {
-                    if(Integer.valueOf(message[4]) <= servers.get(i).getAvailCores() && Integer.valueOf(message[5]) <= servers.get(i).getMemory() && Integer.valueOf(message[6]) <= servers.get(i).getDisk()) {
+                for(int i = 0; i < servers.size(); i++) {     
+                    int sCores = servers.get(i).getAvailCores();
+                    int sMem = servers.get(i).getMemory();
+                    int sDisk = servers.get(i).getDisk();
+
+                    if(jCores <= sCores && jMem <= sMem && jDisk <= sDisk) {
                         best = servers.get(i);
-                        Job job = new Job(message[2], Integer.valueOf(message[4]));
-                        servers.get(i).addJob(job);
-                        System.out.println("job cores " + message[4]);
+                        servers.get(i).addJob(new Job(jId, jCores));
+                        System.out.println("job cores " + jCores);
                         System.out.println("subtracted " + servers.get(i).getType() + " " + servers.get(i).getId() + " " + servers.get(i).getAvailCores());
                         break;
                     } 
@@ -132,10 +145,17 @@ public class MyClient {
                 data = din.readLine();
 
             } else if (message[0].equals("JCPL")) {
+                String cType = message[3];
+                String cId = message[4];
+                String jId = message[2];
+
                 for(int i = 0; i < servers.size(); i++) {
-                    if(servers.get(i).getId().equals(message[4]) && servers.get(i).getType().equals(message[3])) {
-                        servers.get(i).removeJob(message[2]);
-                        System.out.println("added " + servers.get(i).getType() + " " + servers.get(i).getId() + " " + servers.get(i).getAvailCores());
+                    String sType = servers.get(i).getType();
+                    String sId = servers.get(i).getId();
+                    
+                    if(sId.equals(cId) && sType.equals(cType)) {
+                        servers.get(i).removeJob(jId);
+                        System.out.println("added " + sType + " " + sId + " " + servers.get(i).getAvailCores());
                         break;
                     }
                 }
