@@ -118,11 +118,10 @@ public class MyClient {
                 // If Servers haven't already been retrieved then get them
                 if(servers.size() == 0) {               
                     servers = getServers(din, dout);
-                    writeData(dout, "OK");
-                    data = readData(din);
                 }
-
+                
                 String jId = message[2];                    // Job Id
+                int jEstTime = Integer.valueOf(message[3]);
                 int jCores = Integer.valueOf(message[4]);   // Required Cores for Job
                 int jMem = Integer.valueOf(message[5]);     // Required Memory for Job 
                 int jDisk = Integer.valueOf(message[6]);    // Required Disk for Job
@@ -137,36 +136,15 @@ public class MyClient {
                     // then add the Job to that Server to update it's Avaliable Cores
                     if(jCores <= sCores && jMem <= sMem && jDisk <= sDisk) {
                         best = servers.get(i);
-                        servers.get(i).addJob(new Job(jId, jCores));
+                        servers.get(i).addJob(new Job(jId, jCores, jDisk, jMem, jEstTime));
                         break;
                     } 
                 }
 
-                
                 // If the there wasn't a Server that had sufficent Resources then:
                 if(best.getId().equals("id")) {
-                    // Get the last (biggest) Server and it's Available Cores
-                    int tempServer = servers.size() - 1;
-                    int check = servers.get(tempServer).getAvailCores();
-
-                    // Check every Server in the Servers List
-                    for(int i = 0; i < servers.size(); i++) {     
-                        int sCores = servers.get(i).getCores();         // A Servers Intial Cores
-                        int sAvaCores = servers.get(i).getAvailCores(); // A Servers Avaliable Cores
-                        int sMem = servers.get(i).getMemory();          // A Servers Memory 
-                        int sDisk = servers.get(i).getDisk();           // A Servers Disk 
-                        
-                        // Find a Server that has the capacity (Intial Cores, Memory, Disk)
-                        // to handle the job AND has the least amount of Avaliable Cores
-                        // unused or waiting for queued Jobs (if Avaliable Cores is negative) 
-                        if(jCores <= sCores && jMem <= sMem && jDisk <= sDisk && check <= sAvaCores) {
-                            check = sAvaCores;
-                            tempServer = i; 
-                        } 
-                    }
-                    // Add the Job to the Server to update it's Avaliable Cores
-                    best = servers.get(tempServer);
-                    servers.get(tempServer).addJob(new Job(jId, jCores));
+                    best = servers.get(servers.size() - 1);
+                    best.addJob(new Job(jId, jCores, jDisk, jMem, jEstTime));
                 }
 
                 // Schedule the Job to the Server
@@ -189,6 +167,44 @@ public class MyClient {
                     // Once it's found remove the Job to update it's Available Cores
                     if(sId.equals(cId) && sType.equals(cType)) {
                         servers.get(i).removeJob(jId);
+                        
+                        Server target = servers.get(i);
+                        int tCores = target.getAvailCores();
+                        int tMem = target.getMemory();
+                        int tDisk = target.getDisk();
+                        Server source = servers.get(servers.size() - 1);
+                        List<Job> jobs = source.getJobs();
+                        Job job = new Job("id", 0, 0, 0, 0);
+
+                        if(jobs.size() > 1) {
+                            for(int k = 1; k < jobs.size(); k++) {
+                                Job tempJob = jobs.get(k);
+                                int jCores = tempJob.getCores();
+                                int jMem = tempJob.getMemory();
+                                int jDisk = tempJob.getDisk();
+
+                                if(jCores <= tCores && jMem <= tMem && jDisk <= tDisk && source != target) {
+                                    int jEstTime = job.getEstTime();
+                                    int tEstTime = tempJob.getEstTime();
+            
+                                    if(jEstTime < tEstTime) {
+                                        job = tempJob;
+                                    }
+                                }
+                            }
+                        }
+
+                        if(!job.getId().equals("id")) {
+                            String migj = "MIGJ " + job.getId() + " " + source.getType() + " " + source.getId() + " " + target.getType() + " " + target.getId(); 
+                            writeData(dout, migj);
+                                
+                            data = readData(din);
+
+                            if(data.equals("OK")) {
+                                target.addJob(job);
+                                source.removeJob(job.getId());
+                            }
+                        }
                         break;
                     }
                 }
@@ -201,7 +217,6 @@ public class MyClient {
 
     // Writes data to server appending newline at the end
     private static void writeData(DataOutputStream dout, String data) throws IOException {
-        System.out.println("S: " + data);
         dout.write((data + "\n").getBytes());
         dout.flush();
     }
@@ -209,7 +224,6 @@ public class MyClient {
     // Read the data from the server and return it
     private static String readData(BufferedReader din) throws IOException {
         String data = din.readLine();
-        System.out.println("R: " + data);
         return data;
     }
 }

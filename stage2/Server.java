@@ -68,6 +68,10 @@ public class Server {
     public int getDisk() {
         return disk;
     }
+    
+    public List<Job> getJobs() {
+        return jobs;
+    }
 
     // Add a job to the Job List for a Server and update the Avaliable cores
     public void addJob(Job job) {
