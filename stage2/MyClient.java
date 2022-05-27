@@ -158,7 +158,7 @@ public class MyClient {
                         
                         // Find a Server that has the capacity (Intial Cores, Memory, Disk)
                         // to handle the job AND has the least amount of Avaliable Cores
-                        // unused or waiting for queued Jobs
+                        // unused or waiting for queued Jobs (if Avaliable Cores is negative) 
                         if(jCores <= sCores && jMem <= sMem && jDisk <= sDisk && check <= sAvaCores) {
                             check = sAvaCores;
                             tempServer = i; 
@@ -170,7 +170,8 @@ public class MyClient {
                 }
 
                 // Schedule the Job to the Server
-                scheduleJob(dout, jId, best.getType(), best.getId());
+                String schd = "SCHD " + jId + " " + best.getType() + " " + best.getId();
+                writeData(dout, schd);
 
                 data = readData(din);
 
@@ -198,24 +199,17 @@ public class MyClient {
         }
     }
 
-    // Assemble Schedule String and Write to server
-    public static void scheduleJob(DataOutputStream dout, String jobID, String serverType, String serverID)
-            throws IOException {
-        String schd = "SCHD " + jobID + " " + serverType + " " + serverID;
-        writeData(dout, schd);
-    }
-
     // Writes data to server appending newline at the end
     private static void writeData(DataOutputStream dout, String data) throws IOException {
-        String send = data + "\n";
-        byte[] sendBytes = send.getBytes();
-        dout.write(sendBytes);
+        System.out.println("S: " + data);
+        dout.write((data + "\n").getBytes());
         dout.flush();
     }
 
     // Read the data from the server and return it
     private static String readData(BufferedReader din) throws IOException {
         String data = din.readLine();
+        System.out.println("R: " + data);
         return data;
     }
 }
