@@ -8,8 +8,9 @@ import stage2.Server.ServerSortingComparator;
 
 public class MyClient {
     public static void main(String[] args) {
-        if (args.length != 2 || !args[0].equals("-a") || !args[1].equals("sbf")) {
-            System.out.println("Usage: java MyClient -a sbf");
+        // check that the cmd line has the correct argument
+        if (args.length != 2 || !args[0].equals("-a") || !args[1].equals("baf")) {
+            System.out.println("Usage: java MyClient -a baf");
             System.exit(0);
         }
 
@@ -21,13 +22,18 @@ public class MyClient {
             BufferedReader din = new BufferedReader(new InputStreamReader(s.getInputStream()));
             DataOutputStream dout = new DataOutputStream(s.getOutputStream());
 
+            String data = "";
+
             initiateHandshake(din, dout);
 
-            if (args[1].equals("sbf")) {
-                sbf(din, dout);
-            }
+            baf(din, dout);
 
+            // QUIT from server 
             writeData(dout, "QUIT");
+            data = readData(din);
+            if(!data.equals("QUIT")) {
+                writeData(dout, "QUIT");
+            }
         } catch (UnknownHostException e) {
             System.out.println("Sock:" + e.getMessage());
         } catch (EOFException e) {
@@ -58,7 +64,7 @@ public class MyClient {
     }
 
     // Sends request to server for all server information and returns a List of all
-    // servers
+    // servers, sorted by cores, then memory, then disk
     private static List<Server> getServers(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         writeData(dout, "GETS All");
@@ -72,21 +78,21 @@ public class MyClient {
 
         writeData(dout, "OK");
 
-        // parse every message and store as a List of servers
+        // parse every message and store as a List of Servers
         for (int i = 0; i < serverNo; i++) {
             data =  readData(din);
             String[] serverMessage = data.split(" ");
 
-            String sType = serverMessage[0];
-            String sId = serverMessage[1];
-            int sCores = Integer.valueOf(serverMessage[4]);
-            int sMem = Integer.valueOf(serverMessage[5]);
-            int sDisk = Integer.valueOf(serverMessage[6]);
+            String sType = serverMessage[0];                    // Type of Server
+            String sId = serverMessage[1];                      // Id of Server
+            int sCores = Integer.valueOf(serverMessage[4]);     // Number of Cores in that Server
+            int sMem = Integer.valueOf(serverMessage[5]);       // Amount of Memory in that Server
+            int sDisk = Integer.valueOf(serverMessage[6]);      // Amount of Disk in that Server
 
-            servers.add(new Server(sType, sId, sCores, sMem, sDisk));
+            servers.add(new Server(sType, sId, sCores, sMem, sDisk));   // add that Server to the list
         }
 
-        Collections.sort(servers, new ServerSortingComparator());
+        Collections.sort(servers, new ServerSortingComparator());   // sort the Servers
 
         writeData(dout, "OK");
         data =  readData(din);
@@ -94,36 +100,41 @@ public class MyClient {
         return servers;
     }
 
-    private static void sbf(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void baf(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         List<Server> servers = new ArrayList<>();
         
         while (true) {
-            Server best = new Server("null", "id", 0, 0, 0);
+            Server best = new Server("null", "id", 0, 0, 0);    // Placeholder Server
 
             writeData(dout, "REDY");
 
             data = readData(din);
             String[] message = data.split(" ");
 
+            // If message is a job submission
             if (message[0].equals("JOBN")) {
                 
-                if(servers.size() == 0) {
+                // If Servers haven't already been retrieved then get them
+                if(servers.size() == 0) {               
                     servers = getServers(din, dout);
                     writeData(dout, "OK");
                     data = readData(din);
                 }
 
-                String jId = message[2];
-                int jCores = Integer.valueOf(message[4]);
-                int jMem = Integer.valueOf(message[5]);
-                int jDisk = Integer.valueOf(message[6]);
+                String jId = message[2];                    // Job Id
+                int jCores = Integer.valueOf(message[4]);   // Required Cores for Job
+                int jMem = Integer.valueOf(message[5]);     // Required Memory for Job 
+                int jDisk = Integer.valueOf(message[6]);    // Required Disk for Job
                 
+                // Iterating through the List of Servers
                 for(int i = 0; i < servers.size(); i++) {     
-                    int sCores = servers.get(i).getAvailCores();
-                    int sMem = servers.get(i).getMemory();
-                    int sDisk = servers.get(i).getDisk();
+                    int sCores = servers.get(i).getAvailCores();    // A Servers Avaliable Cores(not running jobs or waiting for jobs) 
+                    int sMem = servers.get(i).getMemory();          // A Servers Memory 
+                    int sDisk = servers.get(i).getDisk();           // A Servers Disk 
                     
+                    // If the Server has enough Avaliable Cores and Memory and Disk for that job
+                    // then add the Job to that Server to update it's Avaliable Cores
                     if(jCores <= sCores && jMem <= sMem && jDisk <= sDisk) {
                         best = servers.get(i);
                         servers.get(i).addJob(new Job(jId, jCores));
@@ -131,55 +142,63 @@ public class MyClient {
                     } 
                 }
 
-                int tempServer = servers.size() - 1;
-                int check = servers.get(tempServer).getAvailCores();
-
+                
+                // If the there wasn't a Server that had sufficent Resources then:
                 if(best.getId().equals("id")) {
+                    // Get the last (biggest) Server and it's Available Cores
+                    int tempServer = servers.size() - 1;
+                    int check = servers.get(tempServer).getAvailCores();
+
+                    // Check every Server in the Servers List
                     for(int i = 0; i < servers.size(); i++) {     
-                        int sCores = servers.get(i).getCores();
-                        int sAvaCores = servers.get(i).getAvailCores();
-                        int sMem = servers.get(i).getMemory();
-                        int sDisk = servers.get(i).getDisk();
+                        int sCores = servers.get(i).getCores();         // A Servers Intial Cores
+                        int sAvaCores = servers.get(i).getAvailCores(); // A Servers Avaliable Cores
+                        int sMem = servers.get(i).getMemory();          // A Servers Memory 
+                        int sDisk = servers.get(i).getDisk();           // A Servers Disk 
                         
-                        if(jCores <= sCores && jMem <= sMem && jDisk <= sDisk && check < sAvaCores) {
+                        // Find a Server that has the capacity (Intial Cores, Memory, Disk)
+                        // to handle the job AND has the least amount of Avaliable Cores
+                        // unused or waiting for queued Jobs
+                        if(jCores <= sCores && jMem <= sMem && jDisk <= sDisk && check <= sAvaCores) {
                             check = sAvaCores;
                             tempServer = i; 
                         } 
                     }
+                    // Add the Job to the Server to update it's Avaliable Cores
                     best = servers.get(tempServer);
                     servers.get(tempServer).addJob(new Job(jId, jCores));
                 }
 
+                // Schedule the Job to the Server
                 scheduleJob(dout, jId, best.getType(), best.getId());
 
                 data = readData(din);
 
+            // If message is a job completion
             } else if (message[0].equals("JCPL")) {
-                String cType = message[3];
-                String cId = message[4];
-                String jId = message[2];
+                String cType = message[3];  // Completed ServerType
+                String cId = message[4];    // Completed ServerId
+                String jId = message[2];    // Completed JobId
 
+                // Find the Completed Server in the Servers List
                 for(int i = 0; i < servers.size(); i++) {
                     String sType = servers.get(i).getType();
                     String sId = servers.get(i).getId();
 
+                    // Once it's found remove the Job to update it's Available Cores
                     if(sId.equals(cId) && sType.equals(cType)) {
                         servers.get(i).removeJob(jId);
                         break;
                     }
                 }
+            // If message is none break out of algorithm
             } else if (message[0].equals("NONE")) {
                 break;
             }
         }
     }
 
-    public static void migrateJob(DataOutputStream dout, String jobID, String sType, String sID, String tType, String tID)
-            throws IOException {
-        String migj = "MIGJ " + jobID + " " + sType + " " + sID + " " + tType + " " + tID;
-        writeData(dout, migj);
-    }
-
+    // Assemble Schedule String and Write to server
     public static void scheduleJob(DataOutputStream dout, String jobID, String serverType, String serverID)
             throws IOException {
         String schd = "SCHD " + jobID + " " + serverType + " " + serverID;
@@ -188,14 +207,15 @@ public class MyClient {
 
     // Writes data to server appending newline at the end
     private static void writeData(DataOutputStream dout, String data) throws IOException {
-        System.out.println("S: " + data);
-        dout.write((data + "\n").getBytes());
+        String send = data + "\n";
+        byte[] sendBytes = send.getBytes();
+        dout.write(sendBytes);
         dout.flush();
     }
 
+    // Read the data from the server and return it
     private static String readData(BufferedReader din) throws IOException {
         String data = din.readLine();
-        System.out.println("R: " + data);
         return data;
     }
 }

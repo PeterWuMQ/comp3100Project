@@ -3,14 +3,15 @@ package stage2;
 import java.util.*;
 
 public class Server {
-    private String type;
-    private String id;
-    private int cores;
-    private int availCores;
-    private int memory;
-    private int disk;
-    private List<Job> jobs = new ArrayList<>();
+    private String type;                            // type of Server
+    private String id;                              // id of Server
+    private int cores;                              // amount of cores for a Server 
+    private int availCores;                         // amount of cores avaliable for a Server
+    private int memory;                             // amount of memory for a Server
+    private int disk;                               // amount of disk for a Server
+    private List<Job> jobs = new ArrayList<>();     // Jobs running or waiting for a Server
 
+    // Create a new Server
     public Server(String type, String id, int cores, int memory, int disk) {
         setType(type);
         setId(id);
@@ -68,11 +69,13 @@ public class Server {
         return disk;
     }
 
+    // Add a job to the Job List for a Server and update the Avaliable cores
     public void addJob(Job job) {
         jobs.add(job);
         setAvailCores(getAvailCores() - job.getCores());
     }
 
+    // Remove a job from the Job List for a Server and update the Avaliable cores
     public void removeJob(String id) {
         int c;
         for (int i = 0; i < jobs.size(); i++) {
@@ -85,6 +88,7 @@ public class Server {
         }
     }
 
+    // Sort a List of Servers by Cores, then Memory, then Disk
     static class ServerSortingComparator implements Comparator<Server> {
         @Override
         public int compare(Server a, Server b) {
