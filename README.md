@@ -26,4 +26,4 @@ Copy stage2 folder from ./comp3100Project into ./S2Demo
 
 In ./S2Demo open a terminal and execute the following scripts:
 chmod u+rwx stage2-test-x86 
-./stage2-test-x86 "java stage2.MyClient -a baf" -o tt -n
+./stage2-test-x86 "java stage2.MyClient -a bftm" -o tt -n

@@ -1,11 +1,11 @@
 package stage2;
 
 public class Job {
-    private String id;
-    private int cores;
-    private int memory;                            
-    private int disk;                              
-    private int estTime;
+    private String id;      // id of a Job
+    private int cores;      // amount of cores required for a job
+    private int memory;     // amount of memory required for a job                  
+    private int disk;       // amount of disk required for a job                 
+    private int estTime;    // estimated runtime of a job
 
     public Job(String id, int cores, int disk, int memory, int estTime) {
         setId(id);

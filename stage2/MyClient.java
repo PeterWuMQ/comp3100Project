@@ -9,8 +9,8 @@ import stage2.Server.ServerSortingComparator;
 public class MyClient {
     public static void main(String[] args) {
         // check that the cmd line has the correct argument
-        if (args.length != 2 || !args[0].equals("-a") || !args[1].equals("baf")) {
-            System.out.println("Usage: java MyClient -a baf");
+        if (args.length != 2 || !args[0].equals("-a") || !args[1].equals("bftm")) {
+            System.out.println("Usage: java MyClient -a bftm");
             System.exit(0);
         }
 
@@ -26,7 +26,7 @@ public class MyClient {
 
             initiateHandshake(din, dout);
 
-            baf(din, dout);
+            bftm(din, dout);
 
             // QUIT from server 
             writeData(dout, "QUIT");
@@ -100,7 +100,7 @@ public class MyClient {
         return servers;
     }
 
-    private static void baf(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void bftm(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         List<Server> servers = new ArrayList<>();
         
@@ -141,7 +141,8 @@ public class MyClient {
                     } 
                 }
 
-                // If the there wasn't a Server that had sufficent Resources then:
+                // If the there wasn't a Server that had sufficent Resources then assign to 
+                // last in Servers List (largest)
                 if(best.getId().equals("id")) {
                     best = servers.get(servers.size() - 1);
                     best.addJob(new Job(jId, jCores, jDisk, jMem, jEstTime));
@@ -161,32 +162,35 @@ public class MyClient {
 
                 // Find the Completed Server in the Servers List
                 for(int i = 0; i < servers.size(); i++) {
-                    String sType = servers.get(i).getType();
-                    String sId = servers.get(i).getId();
+                    String sType = servers.get(i).getType();    // A Servers Type
+                    String sId = servers.get(i).getId();        // A Servers Id
 
-                    // Once it's found remove the Job to update it's Available Cores
+                    // Once the completed server is found remove the Job to update it's Available Cores
                     if(sId.equals(cId) && sType.equals(cType)) {
-                        servers.get(i).removeJob(jId);
+                        servers.get(i).removeJob(jId);     
                         
-                        Server target = servers.get(i);
-                        int tCores = target.getAvailCores();
-                        int tMem = target.getMemory();
-                        int tDisk = target.getDisk();
-                        Server source = servers.get(servers.size() - 1);
-                        List<Job> jobs = source.getJobs();
+                        Server target = servers.get(i);                                         // target Server (Completed)
+                        int tCores = target.getAvailCores();                                    // target Server Available Cores
+                        int tMem = target.getMemory();                                          // target Server Memory
+                        int tDisk = target.getDisk();                                           // target Server Disk
+                        Server source = servers.get(servers.size() - 1);                        // set source to last Server in List
+                        List<Job> jobs = source.getJobs();                                      // get the Job list for the last Server
                         Job job = new Job("id", 0, 0, 0, 0);
 
+                        // If there are jobs waiting on the largest server then
                         if(jobs.size() > 1) {
                             for(int k = 1; k < jobs.size(); k++) {
-                                Job tempJob = jobs.get(k);
-                                int jCores = tempJob.getCores();
-                                int jMem = tempJob.getMemory();
-                                int jDisk = tempJob.getDisk();
-
+                                Job tempJob = jobs.get(k);                                      
+                                int jCores = tempJob.getCores();    // Required Cores for Job
+                                int jMem = tempJob.getMemory();     // Required Memory for Job
+                                int jDisk = tempJob.getDisk();      // Required Disk for Job
+                                
+                                // Check if target server has the capacity to handle a waiting job
                                 if(jCores <= tCores && jMem <= tMem && jDisk <= tDisk && source != target) {
                                     int jEstTime = job.getEstTime();
                                     int tEstTime = tempJob.getEstTime();
-            
+                                    
+                                    // And find the job with the longest estimated runtime
                                     if(jEstTime < tEstTime) {
                                         job = tempJob;
                                     }
@@ -194,12 +198,15 @@ public class MyClient {
                             }
                         }
 
+                        // If a job is found then migrate it to the target server
                         if(!job.getId().equals("id")) {
                             String migj = "MIGJ " + job.getId() + " " + source.getType() + " " + source.getId() + " " + target.getType() + " " + target.getId(); 
                             writeData(dout, migj);
                                 
                             data = readData(din);
 
+                            // If migration is successful update the Job List for source 
+                            // and target servers and update Avaliable cores
                             if(data.equals("OK")) {
                                 target.addJob(job);
                                 source.removeJob(job.getId());
