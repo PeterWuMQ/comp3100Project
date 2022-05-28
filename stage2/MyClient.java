@@ -9,8 +9,8 @@ import stage2.Server.ServerSortingComparator;
 public class MyClient {
     public static void main(String[] args) {
         // check that the cmd line has the correct argument
-        if (args.length != 2 || !args[0].equals("-a") || !args[1].equals("bftm")) {
-            System.out.println("Usage: java MyClient -a bftm");
+        if (args.length != 2 || !args[0].equals("-a") || !args[1].equals("sfftm")) {
+            System.out.println("Usage: java MyClient -a sfftm");
             System.exit(0);
         }
 
@@ -26,7 +26,7 @@ public class MyClient {
 
             initiateHandshake(din, dout);
 
-            bftm(din, dout);
+            sfftm(din, dout);
 
             // QUIT from server
             writeData(dout, "QUIT");
@@ -100,7 +100,7 @@ public class MyClient {
         return servers;
     }
 
-    private static void bftm(BufferedReader din, DataOutputStream dout) throws IOException {
+    private static void sfftm(BufferedReader din, DataOutputStream dout) throws IOException {
         String data = "";
         List<Server> servers = new ArrayList<>();
 
