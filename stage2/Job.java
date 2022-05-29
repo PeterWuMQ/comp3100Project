@@ -7,7 +7,7 @@ public class Job {
     private int disk;       // amount of disk required for a job                 
     private int estTime;    // estimated runtime of a job
 
-    public Job(String id, int cores, int disk, int memory, int estTime) {
+    public Job(String id, int cores, int memory, int disk, int estTime) {
         setId(id);
         setMemory(memory);
         setDisk(disk);
