@@ -137,7 +137,7 @@ public class MyClient {
                     // then add the Job to that Server to update it's Avaliable Cores
                     if (jCores <= sCores && jMem <= sMem && jDisk <= sDisk) {
                         best = servers.get(i);
-                        servers.get(i).addJob(new Job(jId, jCores, jDisk, jMem, jEstTime));
+                        servers.get(i).addJob(new Job(jId, jCores, jMem, jDisk, jEstTime));
                         break;
                     }
                 }
@@ -146,7 +146,7 @@ public class MyClient {
                 // last in Servers List (largest)
                 if (best.getId().equals("id")) {
                     best = servers.get(servers.size() - 1);
-                    best.addJob(new Job(jId, jCores, jDisk, jMem, jEstTime));
+                    best.addJob(new Job(jId, jCores, jMem, jDisk, jEstTime));
                 }
 
                 // Schedule the Job to the Server
